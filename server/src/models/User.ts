@@ -13,6 +13,8 @@ export interface IUser extends Document {
   providerId?: string;            // ID returned by the SSO provider
   isEmailVerified: boolean;
 
+  tokenVersion: number;
+
   // Account recovery
   passwordResetToken?: string;
   passwordResetExpires?: Date;
@@ -39,6 +41,8 @@ const userSchema = new mongoose.Schema<IUser>(
     authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
     providerId: { type: String },
     isEmailVerified: { type: Boolean, default: false },
+
+    tokenVersion: { type: Number, default: 0, select: false },
 
     passwordResetToken: { type: String, select: false },
     passwordResetExpires: { type: Date, select: false },

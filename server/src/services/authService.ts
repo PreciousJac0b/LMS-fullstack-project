@@ -1,7 +1,7 @@
 import { loginInput, signUpInput } from "../types/auth";
 import { User } from "../models/User";
 import { HashUtils } from "../utils/hashUtils";
-import { JWTUtils } from "../utils/jwtUtil";
+import { JWTUtils } from "../utils/jwtUtils";
 
 export class AuthService {
     static async signup(data: signUpInput) {
@@ -51,7 +51,7 @@ export class AuthService {
 
         if (!user.password) {
             return {
-                success: "false",
+                success: false,
                 message: "This account uses social sign-in. Please log in with Google."
             }
         }
@@ -62,7 +62,12 @@ export class AuthService {
             return { success: false, message: 'Invalid password' };
         }
 
-        const token = JWTUtils.generateToken({ id: user.id, email: user.email, role: user.role, firstName: user.firstName, lastName: user.lastName });
+        const accessToken = JWTUtils.generateAccessToken({ id: user.id, role: user.role });
+
+        const refreshToken = JWTUtils.generateRefreshToken({
+            id: user.id,
+            tokenVersion: user.tokenVersion ?? 0,
+        })
 
         const userSafe = user.toObject();
         const { password: _, ...userWithoutPassword } = userSafe;
@@ -70,7 +75,47 @@ export class AuthService {
             success: true,
             message: 'User logged in successfully',
             user: userWithoutPassword,
-            token,
+            accessToken,
+            refreshToken,
         };
+    }
+
+    static async refresh(refreshToken: string) {
+        const decoded = JWTUtils.verifyRefreshToken(refreshToken);
+        if ('error' in decoded) {
+            return {
+                success: false,
+                message: 'Invalid or expired refresh token. Please log in again.',
+                code: 'REFRESH_INVALID',
+            };
+        }
+
+        const user = await User.findById(decoded.id).select('+tokenVersion');
+        if (!user) {
+            return {
+                success: false,
+                message: 'User no longer exists.',
+                code: 'USER_NOT_FOUND',
+            };
+        }
+
+        if (decoded.tokenVersion !== user.tokenVersion) {
+            return {
+                success: false,
+                message: 'Refresh token has been revoked. Please log in again.',
+                code: 'REFRESH_REVOKED',
+            };
+        }
+
+        const accessToken = JWTUtils.generateAccessToken({ id: user.id, role: user.role });
+
+
+        return {
+            success: true,
+            message: 'Token refreshed successfully.',
+            code: 'REFRESH_OK',
+            data: accessToken,
+        };
+
     }
 }

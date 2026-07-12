@@ -2,6 +2,7 @@ import express, { Application } from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import authRoutes from './routes/authRoutes';
 import { LoggerUtils } from './utils/loggerUtils';
 
 dotenv.config();
@@ -26,6 +27,7 @@ app.use(
 )
 
 app.use(express.json())
+app.use('api/v1/auth', authRoutes);
 
 const PORT = Number(process.env.PORT) || 3000;
 const MONGODB_URI: string = process.env.MONGODB_URI as string;
