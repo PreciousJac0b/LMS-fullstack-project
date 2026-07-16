@@ -1,4 +1,5 @@
 import mongoose, { Document } from 'mongoose';
+import slugify from 'slugify';
 
 export type CourseLevel = 'beginner' | 'intermediate' | 'advanced';
 export type CourseStatus = 'draft' | 'published' | 'unpublished';
@@ -69,6 +70,25 @@ const courseSchema = new mongoose.Schema<ICourse>(
   { timestamps: true },
 );
 
+courseSchema.pre('save', async function () {
+  if (!this.isModified('title')) {
+    return;
+  }
+
+  const baseSlug = slugify(this.title, { lower: true, strict: true });
+
+  let slug = baseSlug;
+  let counter = 2;
+
+  while (await mongoose.models.Course.exists({ slug, _id: { $ne: this._id } })) {
+    slug = `${baseSlug}-${counter}`;
+    counter++;
+  }
+
+  this.slug = slug;
+});
+
 courseSchema.index({ title: 'text', description: 'text', tags: 'text' });
+
 
 export const Course = mongoose.model<ICourse>('Course', courseSchema);
