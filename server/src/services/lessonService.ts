@@ -1,5 +1,6 @@
 import { Lesson } from '../models/Lesson';
 import { Course } from '../models/Course';
+import { resolveMediaUrl } from './mediaService';
 import { CreateLessonDTO, UpdateLessonDTO } from '../types/lesson';
 
 export class LessonService {
@@ -13,18 +14,24 @@ export class LessonService {
             (id: any) => id.toString() === userId.toString(),
         );
         if (!isInstructor) {
-            return { fail: { success: false, message: 'You do not have permission to modify this course.', code: 'FORBIDDEN' } };
+            return {
+                fail: {
+                    success: false,
+                    message: 'You do not have permission to modify this course.',
+                    code: 'FORBIDDEN'
+                }
+            };
         }
         return { fail: null };
     }
 
     private static validateContent(contentType: string, data: Partial<CreateLessonDTO>): string | null {
         switch (contentType) {
-            case 'video':  return data.video?.url  ? null : 'MISSING_VIDEO_URL';
-            case 'pdf':    return data.pdf?.url    ? null : 'MISSING_PDF_URL';
+            case 'video': return data.video?.url ? null : 'MISSING_VIDEO_URL';
+            case 'pdf': return data.pdf?.url ? null : 'MISSING_PDF_URL';
             case 'slides': return data.slides?.url ? null : 'MISSING_SLIDES_URL';
-            case 'quiz':   return data.quiz        ? null : 'MISSING_QUIZ_REF';
-            default:       return 'INVALID_CONTENT_TYPE';
+            case 'quiz': return data.quiz ? null : 'MISSING_QUIZ_REF';
+            default: return 'INVALID_CONTENT_TYPE';
         }
     }
 
@@ -77,10 +84,15 @@ export class LessonService {
             },
         );
 
-        return { success: true, message: 'Lesson created successfully.', code: 'LESSON_CREATED', data: saved.toObject() };
+        return {
+            success: true,
+            message: 'Lesson created successfully.',
+            code: 'LESSON_CREATED',
+            data: saved.toObject()
+        };
     }
 
-    static async getLessonsByCourse(courseId: string, isEnrolled = false) {
+    static async getLessonsByCourse(courseId: string, isEnrolled = false) { // For Sidebar
         if (!courseId) {
             return { success: false, message: 'Invalid course id.', code: 'INVALID_COURSE_ID' };
         }
@@ -100,6 +112,7 @@ export class LessonService {
     }
 
     static async getLessonById(lessonId: string, isEnrolled = false) {
+        // Implement validation with Joi
         const lesson = await Lesson.findById(lessonId).lean();
 
         if (!lesson) {
@@ -110,7 +123,23 @@ export class LessonService {
             return { success: false, message: 'Enroll in this course to access this lesson.', code: 'ENROLLMENT_REQUIRED' };
         }
 
-        return { success: true, message: 'Lesson retrieved successfully.', code: 'LESSON_FOUND', data: lesson };
+        const media = resolveMediaUrl(lesson);
+
+        if (!media.success) {
+            if (media.code === 'NO_MEDIA_FOR_TYPE') {
+                return { success: true, message: 'Lesson retrieved.', code: 'LESSON_FOUND', data: lesson };
+            }
+
+            // console.error(`Media unavailable for lesson ${lesson._id}: ${media.code}`);
+            return { success: false, message: 'This lesson\'s content is currently unavailable.', code: 'MEDIA_UNAVAILABLE' };
+        }
+
+        return {
+            success: true,
+            message: 'Lesson retrieved successfully.',
+            code: 'LESSON_FOUND',
+            data: { ...lesson, deliverableUrl: media.url }
+        };
     }
 
     static async updateLesson(lessonId: string, userId: string, updates: UpdateLessonDTO) {
@@ -125,7 +154,7 @@ export class LessonService {
 
         // If content type changes, re-validate the required content exists
         const nextType = updates.contentType ?? lesson.contentType;
-        const contentError = this.validateContent(nextType, { ...lesson.toObject(), ...updates });
+        const contentError = this.validateContent(nextType, { ...lesson.toObject(), ...updates }); // As per JS, updates overwrites lesson object so the updates are the ones left.
         if (contentError) {
             return { success: false, message: 'Missing required content for this lesson type.', code: contentError };
         }
@@ -140,7 +169,12 @@ export class LessonService {
             await Course.updateOne({ _id: lesson.course }, { $inc: { totalDurationSeconds: delta } });
         }
 
-        return { success: true, message: 'Lesson updated successfully.', code: 'LESSON_UPDATED', data: saved.toObject() };
+        return {
+            success: true,
+            message: 'Lesson updated successfully.',
+            code: 'LESSON_UPDATED',
+            data: saved.toObject()
+        };
     }
 
     static async deleteLesson(lessonId: string, userId: string) {
@@ -163,6 +197,10 @@ export class LessonService {
             },
         );
 
-        return { success: true, message: 'Lesson deleted successfully.', code: 'LESSON_DELETED' };
+        return {
+            success: true,
+            message: 'Lesson deleted successfully.',
+            code: 'LESSON_DELETED'
+        };
     }
 }

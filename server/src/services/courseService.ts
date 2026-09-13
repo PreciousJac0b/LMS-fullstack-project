@@ -62,7 +62,7 @@ export class CourseService {
 
 
         const course = await Course.findOne({ slug, status: "published" })
-            .populate('instructor', 'firstName lastName')
+            .populate('instructors', 'firstName lastName')
             .lean();
 
         if (!course) {

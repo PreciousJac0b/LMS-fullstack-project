@@ -70,7 +70,7 @@ const courseSchema = new mongoose.Schema<ICourse>(
   { timestamps: true },
 );
 
-courseSchema.pre('save', async function () {
+courseSchema.pre('validate', async function () {
   if (!this.isModified('title')) {
     return;
   }

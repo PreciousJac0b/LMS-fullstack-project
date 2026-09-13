@@ -7,6 +7,7 @@ const router = express.Router();
 
 
 router.get('/', CourseController.getAllCourses);
+router.post('/', authMiddleware, CourseController.createCourse);
 router.get('/:slug', CourseController.getCourseBySlug);
 router.get('upload-signature', authMiddleware, UploadController.getUploadSignature);
 

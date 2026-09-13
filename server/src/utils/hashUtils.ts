@@ -11,4 +11,10 @@ export class HashUtils {
         const result = await bcrypt.compare(password, hashedPassword);
         return result;
     }
+
+        static async hashToken(token: string): Promise<string> {
+        const salt = await bcrypt.genSalt(10);
+        const hashed = await bcrypt.hash(token, salt);
+        return hashed;
+    }
 }

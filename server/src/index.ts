@@ -4,6 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes';
 import courseRoutes from './routes/courseRoutes';
+import lessonRoutes from './routes/lessonRoutes';
 import { LoggerUtils } from './utils/loggerUtils';
 
 dotenv.config();
@@ -30,6 +31,7 @@ app.use(
 app.use(express.json())
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/courses', courseRoutes);
+app.use('/api/v1/lessons', lessonRoutes);
 
 const PORT = Number(process.env.PORT) || 3000;
 const MONGODB_URI: string = process.env.MONGODB_URI as string;

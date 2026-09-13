@@ -2,9 +2,9 @@ import { Request, Response } from "express";
 import { CourseService } from "../services/courseService";
 
 const statusForCode: Record<string, number> = {
-    INVALID_SLUG: 400,   // bad input
-    COURSE_NOT_FOUND: 404,   // resource doesn't exist
-    COURSE_FOUND: 200,   // success
+    INVALID_SLUG: 400,   
+    COURSE_NOT_FOUND: 404,
+    COURSE_FOUND: 200,  
     INVALID_COURSE_INPUT: 400,
     INVALID_COURSE_PRICE: 400,
     COURSE_CREATED: 201,
@@ -25,7 +25,7 @@ export class CourseController {
     }
     static async getCourseBySlug(req: Request, res: Response): Promise<void> {
         try {
-            const { slug } = req.query;
+            const { slug } = req.params;
             const result = await CourseService.getCourseBySlug(slug as string);
             const status = statusForCode[result.code ?? ''] ?? 400;
             res.status(status).json(result);
