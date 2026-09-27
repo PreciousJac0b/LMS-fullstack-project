@@ -44,7 +44,7 @@ export class CourseController {
                 ...req.body,
                 creatorId: (req as any).user.id,   // from authMiddleware, not the body
             });
-            res.status(statusForCode[result.code]).json(result);
+            res.status(statusForCode[result.code ?? ''] ?? 400).json(result);
         } catch (error) {
             console.error('createCourse error:', error);
             res.status(500).json({ success: false, message: 'Something went wrong.' });

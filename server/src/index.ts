@@ -2,9 +2,13 @@ import express, { Application } from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
 import authRoutes from './routes/authRoutes';
 import courseRoutes from './routes/courseRoutes';
 import lessonRoutes from './routes/lessonRoutes';
+import paymentWebhookRoutes from './routes/paymentWebhookRoute'
+import paymentRoutes from './routes/paymentRoute'
+
 import { LoggerUtils } from './utils/loggerUtils';
 
 dotenv.config();
@@ -28,10 +32,13 @@ app.use(
     })
 )
 
+app.use('/api/v1/payments', paymentWebhookRoutes);
 app.use(express.json())
+app.use(cookieParser());
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/courses', courseRoutes);
 app.use('/api/v1/lessons', lessonRoutes);
+app.use('/api/v1/payments', paymentRoutes);
 
 const PORT = Number(process.env.PORT) || 3000;
 const MONGODB_URI: string = process.env.MONGODB_URI as string;

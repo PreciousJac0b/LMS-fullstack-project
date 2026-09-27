@@ -1,5 +1,6 @@
 import axios from 'axios';
 import crypto from 'crypto';
+import mongoose from 'mongoose';
 import { Payment } from '../models/Payment';
 import { Course } from '../models/Course';
 import { Enrollment } from '../models/Enrollment';
@@ -13,6 +14,13 @@ const paystack = axios.create({
 
 export class PaymentService {
     static async initializePayment(userId: string, courseId: string) {
+        if (!mongoose.isValidObjectId(courseId)) {
+            return {
+                success: false,
+                message: 'Invalid course id.',
+                code: 'INVALID_COURSE_ID',
+            };
+        }
         const course = await Course.findById(courseId).lean();
         if (!course) {
             return {
@@ -22,7 +30,7 @@ export class PaymentService {
             };
         }
         if (course.isFree || course.price <= 0) {
-            return { 
+            return {
                 success: false,
                 message: 'This course is free — no payment needed.',
                 code: 'COURSE_IS_FREE'
@@ -31,7 +39,7 @@ export class PaymentService {
 
         const already = await Enrollment.findOne({ user: userId, course: courseId }).lean();
         if (already) {
-            return { 
+            return {
                 success: false,
                 message: 'You already own this course.',
                 code: 'ALREADY_ENROLLED'
@@ -40,7 +48,7 @@ export class PaymentService {
 
         const user = await User.findById(userId).lean();
         if (!user) {
-            return { 
+            return {
                 success: false,
                 message: 'User not found.',
                 code: 'USER_NOT_FOUND'
@@ -81,7 +89,7 @@ export class PaymentService {
     static async verifyPayment(reference: string) {
         const payment = await Payment.findOne({ reference });
         if (!payment) {
-            return { 
+            return {
                 success: false,
                 message: 'Unknown payment reference.',
                 code: 'PAYMENT_NOT_FOUND'
@@ -99,7 +107,7 @@ export class PaymentService {
             payment.status = 'failed';
             payment.paystackData = txn;
             await payment.save();
-            return { 
+            return {
                 success: false,
                 message: 'Payment was not successful.',
                 code: 'PAYMENT_FAILED'
@@ -110,7 +118,7 @@ export class PaymentService {
             payment.status = 'failed';
             payment.paystackData = txn;
             await payment.save();
-            return { 
+            return {
                 success: false,
                 message: 'Payment amount mismatch.',
                 code: 'PAYMENT_AMOUNT_MISMATCH'

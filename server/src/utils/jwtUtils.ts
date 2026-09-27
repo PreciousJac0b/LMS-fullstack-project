@@ -8,6 +8,7 @@ interface JWTPayload {
     lastName?: string;
     tokenVersion?: number;
     error?: any;
+    sid?: string;
 }
 
 export class JWTUtils {
@@ -40,7 +41,7 @@ export class JWTUtils {
         return token
     }
 
-    static generateRefreshToken(payload: { id: string; tokenVersion: number }) {
+    static generateRefreshToken(payload: { id: string; tokenVersion: number; sid: string }) {
         const secret = this.getRefreshTokenSecret();
 
         const token = jwt.sign(payload, secret, {
@@ -50,7 +51,7 @@ export class JWTUtils {
         return token
     }
 
-    static verifyAccessToken(token: string): JWTPayload | { error: string} {
+    static verifyAccessToken(token: string): JWTPayload | { error: string } {
         try {
             const secret = this.getAccessTokenSecret();
             return jwt.verify(token, secret) as JWTPayload;
@@ -61,8 +62,14 @@ export class JWTUtils {
         }
     }
 
-    static verifyRefreshToken(token: string): JWTPayload {
-        const secret = this.getRefreshTokenSecret();
-        return jwt.verify(token, secret) as JWTPayload;
+    static verifyRefreshToken(token: string): JWTPayload | { error: string } {
+        try {
+            const secret = this.getRefreshTokenSecret();
+            return jwt.verify(token, secret) as JWTPayload;
+        } catch (err: any) {
+            return {
+                error: err.name
+            }
+        }
     }
 }
