@@ -1,26 +1,80 @@
-import { useState } from 'react'
+import { useState, type SubmitEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/auth/useAuth'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
+import { Input } from '@base-ui/react/input'
 
 function LoginPage() {
-    const { user, login } = useAuth()
-    const [message, setMessage] = useState('')
+    const { login } = useAuth()
+    const navigate = useNavigate();
+    const location = useLocation();
 
-    async function handleTestLogin() {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? '/';
+
+    async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
+        event.preventDefault();
+        setError('')
+        setIsSubmitting(true);
+
         try {
-            await login(import.meta.env.VITE_TEST_EMAIL, import.meta.env.VITE_TEST_PASSWORD)
-            setMessage('Logged in through the AuthProvider.')
-        } catch (error: any) {
-            setMessage(`Login failed: ${error.response?.data?.message ?? String(error)}`)
+            await login(email, password);
+            navigate(from, { replace: true })
+        } catch (err: any) {
+            setError(err.response?.data?.message ?? 'Could not log in. Please try again.')
+            setIsSubmitting(false)
         }
     }
 
     return (
-        <div className="space-y-6">
-            <h1 className="text-3xl font-bold">Log in</h1>
-            <Button onClick={handleTestLogin}>Test login</Button>
-            <p className="text-sm text-muted-foreground">{message}</p>
-            <p className="text-sm">Context says: {user ? user.email : 'nobody is logged in'}</p>
+        <div className="mx-auto max-w-sm">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Log in</CardTitle>
+                </CardHeader>
+
+                <CardContent>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="email">Email</Label>
+                            <Input
+                                id="email"
+                                name="email"
+                                type="email"
+                                autoComplete="email"
+                                required
+                                value={email}
+                                onChange={(event) => setEmail(event.target.value)}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="password">Password</Label>
+                            <Input
+                                id="password"
+                                name="password"
+                                type="password"
+                                autoComplete="current-password"
+                                required
+                                value={password}
+                                onChange={(event) => setPassword(event.target.value)}
+                            />
+                        </div>
+
+                        {error && <p className="text-sm text-destructive">{error}</p>}
+
+                        <Button type="submit" className="w-full" disabled={isSubmitting}>
+                            {isSubmitting ? 'Logging in…' : 'Log in'}
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card >
         </div>
     )
 }

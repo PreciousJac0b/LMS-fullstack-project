@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { api, setAccessToken, setOnAuthFailure } from '@/lib/apiClient'
-import { AuthContext, type User } from './authContext';
+import { AuthContext, type User, type SignupInput } from './authContext';
 
 
 type AuthProviderProps = {
@@ -55,6 +55,11 @@ function AuthProvider({ children }: AuthProviderProps) {
     setUser(response.data.data.user)
   }
 
+  async function signup(input: SignupInput) {
+    await api.post('/auth/signup', input);
+    await login(input.email, input.password);
+  }
+
   async function logout() {
     try {
       await api.post('/auth/logout')
@@ -65,7 +70,7 @@ function AuthProvider({ children }: AuthProviderProps) {
   }
 
   return (
-    <AuthContext value={{ user, isRestoring, login, logout }}>
+    <AuthContext value={{ user, isRestoring, login, signup, logout }}>
       {children}
     </AuthContext>
   )

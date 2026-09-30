@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import NotFoundPage from './pages/NotFoundPage'
+import ProtectedRoute from './auth/ProtectedRoute'
+import DashboardPage from './pages/DashboardPage'
+import SignupPage from './pages/SignupPage'
 
 function App() {
   const { user, isRestoring, logout } = useAuth();
@@ -14,23 +17,33 @@ function App() {
         <Link to="/" className="text-sm font-medium hover:underline">
           Courses
         </Link>
+        {user && (
+          <Link to="/dashboard" className="text-sm font-medium hover:underline">
+            Dashboard
+          </Link>
+        )}
         <div className="ml-auto flex items-center gap-3">
           {isRestoring ? (
             <span className="text-sm text-muted-foreground">Checking session…</span>
           )
-          : user ?
-            (<>
-              <span className="text-sm text-muted-foreground">
-                Hi, {user.firstName ?? user.email}
-              </span>
-              <Button variant="outline" size="sm" onClick={logout}>
-                Log out
-              </Button>
-            </>)
-            :
-            (<Link to="/login" className="text-sm font-medium hover:underline">
-              Log in
-            </Link>)
+            : user ?
+              (<>
+                <span className="text-sm text-muted-foreground">
+                  Hi, {user.firstName ?? user.email}
+                </span>
+                <Button variant="outline" size="sm" onClick={logout}>
+                  Log out
+                </Button>
+              </>)
+              :
+              <>
+                <Link to="/login" className="text-sm font-medium hover:underline">
+                  Log in
+                </Link>
+                <Link to="/signup" className="text-sm font-medium hover:underline">
+                  Sign Up
+                </Link>
+              </>
 
           }
 
@@ -40,6 +53,13 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+        />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </div>

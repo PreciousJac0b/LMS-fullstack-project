@@ -11,10 +11,18 @@ export type User = {
   enrollments?: string[]
 }
 
+export type SignupInput = {
+  email: string
+  password: string
+  firstName: string
+  lastName: string
+}
+
 export type AuthContextValue = {
   user: User | null
   isRestoring: boolean
   login: (email: string, password: string) => Promise<void>
+  signup: (input: SignupInput) => Promise<void>
   logout: () => Promise<void>
 }
 
