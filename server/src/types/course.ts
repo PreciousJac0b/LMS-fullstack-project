@@ -7,6 +7,7 @@ export interface GetCoursesQuery {
     isFree?: boolean;
     page?: number;
     limit?: number;
+    level?: string;
 }
 
 

@@ -2,6 +2,10 @@ import { Course } from "../models/Course";
 import { User } from "../models/User";
 import { CreateCourseDTO, GetCoursesQuery } from "../types/course";
 
+function escapeRegex(value: string) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export class CourseService {
     static async getAllCourses(query: GetCoursesQuery = {}) {
         const filter: Record<string, any> = { status: 'published' }
@@ -9,10 +13,19 @@ export class CourseService {
         if (query.tag) filter.tags = query.tag;
         if (query.category) filter.category = query.category;
         if (query.isFree !== undefined) filter.isFree = query.isFree;
+        if (query.level) filter.level = query.level;
 
         if (query.q) {
-            filter.$text = {
-                $search: query.q,
+            const term = String(query.q).trim().slice(0, 60);
+
+            if (term) {
+                const pattern = new RegExp(escapeRegex(term), 'i');
+                filter.$or = [
+                    { title: pattern },
+                    { description: pattern },
+                    { tags: pattern },
+                    { level: pattern }
+                ];
             }
         }
 
