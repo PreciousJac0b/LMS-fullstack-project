@@ -8,6 +8,7 @@ import NotFoundPage from './pages/NotFoundPage'
 import ProtectedRoute from './auth/ProtectedRoute'
 import DashboardPage from './pages/DashboardPage'
 import SignupPage from './pages/SignupPage'
+import CourseDetailPage from './pages/CourseDetailPage'
 
 function App() {
   const { user, isRestoring, logout } = useAuth();
@@ -54,6 +55,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/courses/:slug" element={<CourseDetailPage />} />
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <DashboardPage />
