@@ -142,3 +142,8 @@
 {"level":"info","message":"Shutting down gracefully...","timestamp":"2026-10-03T16:39:32.035Z"}
 {"level":"info","message":"Successfully connected to MongoDB","timestamp":"2026-10-03T16:39:53.809Z"}
 {"level":"info","message":"Server is running on port 3000","timestamp":"2026-10-03T16:39:53.815Z"}
+{"level":"info","message":"Successfully connected to MongoDB","timestamp":"2026-10-04T10:56:33.328Z"}
+{"level":"info","message":"Server is running on port 3000","timestamp":"2026-10-04T10:56:33.334Z"}
+{"level":"info","message":"Shutting down gracefully...","timestamp":"2026-10-04T11:04:35.512Z"}
+{"level":"info","message":"Successfully connected to MongoDB","timestamp":"2026-10-04T11:04:39.867Z"}
+{"level":"info","message":"Server is running on port 3000","timestamp":"2026-10-04T11:04:39.873Z"}

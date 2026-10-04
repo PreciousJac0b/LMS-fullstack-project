@@ -84,7 +84,7 @@ export class AuthService {
         })
 
         const userSafe = user.toObject();
-        const { password: _, ...userWithoutPassword } = userSafe;
+        const { password: _, enrollments, createdCourses, ...userWithoutPassword } = userSafe;
         return {
             success: true,
             message: 'User logged in successfully',

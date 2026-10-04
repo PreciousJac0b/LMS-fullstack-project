@@ -72,4 +72,24 @@ export class JWTUtils {
             }
         }
     }
+
+    static userFromAuthHeader(authHeader?: string):
+    { user: JWTPayload | null; reason: 'NO_TOKEN' | 'TOKEN_EXPIRED' | 'TOKEN_INVALID' | null } {
+
+    if (!authHeader?.startsWith('Bearer ')) {
+        return { user: null, reason: 'NO_TOKEN' };
+    }
+
+    const token = authHeader.split(' ')[1];
+    const decoded = this.verifyAccessToken(token as string);
+
+    if ('error' in decoded) {
+        return {
+            user: null,
+            reason: decoded.error === 'TokenExpiredError' ? 'TOKEN_EXPIRED' : 'TOKEN_INVALID',
+        };
+    }
+
+    return { user: decoded, reason: null };
+}
 }

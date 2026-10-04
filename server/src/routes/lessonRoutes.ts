@@ -2,10 +2,11 @@ import { Router } from 'express';
 import { LessonController } from '../controllers/lessonController';
 import { authMiddleware } from '../middleware/authMiddleware';
 import { requireRole } from '../middleware/roleMiddleware';
+import { optionalAuthMiddleware } from '../middleware/optionalAuthMiddleware';
 
 const router = Router();
 
-router.get('/courses/:courseId/lessons', LessonController.getLessonsByCourse); // previews public
+router.get('/courses/:courseId/lessons', optionalAuthMiddleware, LessonController.getLessonsByCourse); // previews public
 router.get('/:lessonId', authMiddleware, LessonController.getLesson);   // gated content
 
 router.post('/courses/:courseId/lessons', authMiddleware, requireRole('instructor', 'admin'), LessonController.createLesson);

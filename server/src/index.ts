@@ -8,6 +8,7 @@ import courseRoutes from './routes/courseRoutes';
 import lessonRoutes from './routes/lessonRoutes';
 import paymentWebhookRoutes from './routes/paymentWebhookRoute'
 import paymentRoutes from './routes/paymentRoute'
+import enrollmentRoutes from './routes/enrollmentRoutes';
 
 import { LoggerUtils } from './utils/loggerUtils';
 
@@ -39,6 +40,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/courses', courseRoutes);
 app.use('/api/v1/lessons', lessonRoutes);
 app.use('/api/v1/payments', paymentRoutes);
+app.use('/api/v1/enrollments', enrollmentRoutes);
 
 const PORT = Number(process.env.PORT) || 3000;
 const MONGODB_URI: string = process.env.MONGODB_URI as string;

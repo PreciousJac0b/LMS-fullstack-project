@@ -7,32 +7,24 @@ export const authMiddleware = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      res.status(401).json({
+    const { user, reason } = JWTUtils.userFromAuthHeader(req.headers.authorization);
+
+if (!user) {
+    res.status(401).json({
         success: false,
-        message: 'Access denied. No token provided.',
-        code: 'NO_TOKEN',
-      });
-      return;
-    }
+        message:
+            reason === 'NO_TOKEN'
+                ? 'Access denied. No token provided.'
+                : reason === 'TOKEN_EXPIRED'
+                  ? 'Access token expired.'
+                  : 'Invalid token.',
+        code: reason,
+    });
+    return;
+}
 
-    const token = authHeader.split(' ')[1];
-    const decoded = JWTUtils.verifyAccessToken(token);
-
-    if ('error' in decoded) {
-      // Distinguish expiry (client should hit /refresh) from a bad token (re-login)
-      const isExpired = decoded.error === 'TokenExpiredError';
-      res.status(401).json({
-        success: false,
-        message: isExpired ? 'Access token expired.' : 'Invalid token.',
-        code: isExpired ? 'TOKEN_EXPIRED' : 'TOKEN_INVALID',
-      });
-      return;
-    }
-
-    (req as any).user = decoded;
-    next();
+(req as any).user = user;
+next();
   } catch (error) {
     res.status(500).json({
       success: false,
