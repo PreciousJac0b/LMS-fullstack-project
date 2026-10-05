@@ -9,7 +9,11 @@ import { User } from '../models/User';
 const PAYSTACK_BASE = 'https://api.paystack.co';
 const paystack = axios.create({
     baseURL: PAYSTACK_BASE,
-    headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` },
+});
+
+paystack.interceptors.request.use((config) => {
+    config.headers.Authorization = `Bearer ${process.env.PAYSTACK_SECRET_KEY}`;
+    return config;
 });
 
 export class PaymentService {

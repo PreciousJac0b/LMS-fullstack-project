@@ -5,7 +5,8 @@ export class UploadController {
     static async getUploadSignature(req: Request, res: Response): Promise<void> {
         try {
             const contentType = String(req.query.contentType ?? 'video');
-            const result = UploadService.getUploadSignature(contentType);
+            const isPublic = req.query.access === 'public';
+            const result = UploadService.getUploadSignature(contentType, isPublic);
             res.status(200).json(result);
         } catch (error) {
             console.error('signature error:', error);

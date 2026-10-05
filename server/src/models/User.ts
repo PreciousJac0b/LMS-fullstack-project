@@ -19,7 +19,6 @@ export interface IUser extends Document {
   passwordResetToken?: string;
   passwordResetExpires?: Date;
 
-  enrollments?: mongoose.Types.ObjectId[];
 
   createdCourses?: mongoose.Types.ObjectId[];
 
@@ -47,7 +46,6 @@ const userSchema = new mongoose.Schema<IUser>(
     passwordResetToken: { type: String, select: false },
     passwordResetExpires: { type: Date, select: false },
 
-    enrollments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Enrollment' }],
     createdCourses: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Course' }],
   },
   { timestamps: true },

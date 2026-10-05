@@ -66,6 +66,7 @@ export class LessonService {
             order,
             contentType,
             isPreview: data.isPreview ?? false,
+            deliveryType: data.deliveryType ?? 'upload',
             durationSeconds,
             video: data.video,
             pdf: data.pdf,

@@ -13,18 +13,23 @@ export interface ILesson extends Document {
   isPreview: boolean;                // viewable without enrolling? (marketing)
   durationSeconds: number;           // video length, or est. reading/quiz time
 
+  deliveryType?: 'upload' | 'authenticated';
+
   // Type-specific (only the relevant one is populated)
   video?: {
     url: string;                     // streaming/hosted URL
+    publicId?: string;
     provider?: 'self' | 'youtube' | 'vimeo' | 'mux';
     captionsUrl?: string;
   };
   pdf?: {
     url: string;
+    publicId?: string;
     pageCount?: number;
   };
   slides?: {
     url: string;
+    publicId?: string;
     slideCount?: number;
   };
   quiz?: mongoose.Types.ObjectId;    // ref to a Quiz/Test model (Req 9)
@@ -53,17 +58,22 @@ const lessonSchema = new mongoose.Schema<ILesson>(
     isPreview: { type: Boolean, default: false },
     durationSeconds: { type: Number, default: 0 },
 
+    deliveryType: { type: String, enum: ['upload', 'authenticated'], default: 'upload' },
+
     video: {
       url: { type: String },
+      publicId: { type: String },
       provider: { type: String, enum: ['self', 'youtube', 'vimeo', 'mux'], default: 'self' },
       captionsUrl: { type: String },
     },
     pdf: {
       url: { type: String },
+      publicId: { type: String },
       pageCount: { type: Number },
     },
     slides: {
       url: { type: String },
+      publicId: { type: String },
       slideCount: { type: Number },
     },
     quiz: { type: mongoose.Schema.Types.ObjectId, ref: 'Quiz' },

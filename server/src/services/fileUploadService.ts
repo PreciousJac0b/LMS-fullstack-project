@@ -1,4 +1,4 @@
-import cloudinary from '../config/cloudinary';
+import { getCloudinary } from '../config/cloudinary';
 
 function resourceTypeFor(contentType: string): 'video' | 'image' | 'raw' {
     switch (contentType) {
@@ -10,14 +10,15 @@ function resourceTypeFor(contentType: string): 'video' | 'image' | 'raw' {
 }
 
 export class UploadService {
-    static getUploadSignature(contentType: string) {
+    static getUploadSignature(contentType: string, isPublic=false) {
         const timestamp = Math.round(Date.now() / 1000);
         const folder = `courses/${contentType}s`;
+        const type = isPublic ? 'upload' : 'authenticated';
 
         
-        const paramsToSign = { timestamp, folder };
+        const paramsToSign = { timestamp, folder, type };
 
-        const signature = cloudinary.utils.api_sign_request(
+        const signature = getCloudinary().utils.api_sign_request(
             paramsToSign,
             process.env.CLOUDINARY_API_SECRET!,
         );
@@ -30,6 +31,7 @@ export class UploadService {
                 signature,
                 timestamp,
                 folder,
+                type,
                 apiKey: process.env.CLOUDINARY_API_KEY,
                 cloudName: process.env.CLOUDINARY_CLOUD_NAME,
                 resourceType: resourceTypeFor(contentType),

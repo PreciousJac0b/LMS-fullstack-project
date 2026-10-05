@@ -27,6 +27,7 @@ export interface CreateLessonDTO {
     contentType: LessonContentType;
 
     isPreview?: boolean;
+    deliveryType?: 'upload' | 'authenticated';
     durationSeconds?: number;
 
     video?: VideoContent;

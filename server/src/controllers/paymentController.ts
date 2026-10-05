@@ -30,9 +30,9 @@ export class PaymentController {
 
     static async verifyPayment(req: Request, res: Response): Promise<void> {
         try {
-            // const { reference } = req.params;
-            const raw = req.query.reference;
-            const reference = Array.isArray(raw) ? raw[0] : raw;
+            const { reference } = req.params;
+            // const raw = req.query.reference;
+            // const reference = Array.isArray(raw) ? raw[0] : raw;
 
             if (typeof reference !== 'string' || !reference) {
                 res.status(400).json({
