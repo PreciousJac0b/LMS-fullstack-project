@@ -23,6 +23,11 @@ const statusForCode: Record<string, number> = {
     REFRESH_REVOKED: 401,
     USER_NOT_FOUND: 401,
     ME_OK: 200,
+    EMAIL_VERIFIED: 200,
+    VERIFY_TOKEN_INVALID: 400,
+    ALREADY_VERIFIED: 200,
+    VERIFICATION_SENT: 200,
+    EMAIL_SEND_FAILED: 503,
 };
 
 export class AuthController {
@@ -115,6 +120,25 @@ export class AuthController {
             const result = await AuthService.logoutAll(req.cookies?.[REFRESH_COOKIE_NAME]);
             res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions);
             res.status(200).json(result);
+        } catch (err: any) {
+            res.status(500).json({ success: false, message: 'Internal Server Error' });
+        }
+    }
+
+     static async verifyEmail(req: Request, res: Response): Promise<void> {
+        try {
+            const result = await AuthService.verifyEmail(req.body.token);
+            res.status(statusForCode[result.code ?? ''] ?? 400).json(result);
+        } catch (err: any) {
+            res.status(500).json({ success: false, message: 'Internal Server Error' });
+        }
+    }
+
+    static async resendVerification(req: Request, res: Response): Promise<void> {
+        try {
+            const userId = (req as any).user.id;
+            const result = await AuthService.resendVerification(userId);
+            res.status(statusForCode[result.code ?? ''] ?? 400).json(result);
         } catch (err: any) {
             res.status(500).json({ success: false, message: 'Internal Server Error' });
         }

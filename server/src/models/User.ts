@@ -19,6 +19,9 @@ export interface IUser extends Document {
   passwordResetToken?: string;
   passwordResetExpires?: Date;
 
+  emailVerificationToken?: string;
+  emailVerificationExpires?: Date
+
 
   createdCourses?: mongoose.Types.ObjectId[];
 
@@ -46,9 +49,12 @@ const userSchema = new mongoose.Schema<IUser>(
     passwordResetToken: { type: String, select: false },
     passwordResetExpires: { type: Date, select: false },
 
+    emailVerificationToken: { type: String, select: false },
+    emailVerificationExpires: { type: Date, select: false },
+
     createdCourses: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Course' }],
   },
-  { timestamps: true },
+  { timestamps: true, strict: 'throw' },
 );
 
 

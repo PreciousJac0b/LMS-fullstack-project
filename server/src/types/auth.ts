@@ -1,11 +1,5 @@
-export interface signUpInput {
-  email: string;
-  password: string;
-  firstName?: string;
-  lastName?: string;
-}
+import { z } from 'zod';
+import { loginSchema, signupSchema } from '../validation/authSchemas';
 
-export interface loginInput {
-  email: string
-  password: string
-}
+export type signUpInput = z.infer<typeof signupSchema>;
+export type loginInput = z.infer<typeof loginSchema>;

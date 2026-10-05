@@ -3,9 +3,11 @@ import { User } from "../models/User";
 import { HashUtils } from "../utils/hashUtils";
 import { JWTUtils } from "../utils/jwtUtils";
 import { Session } from "../models/Session";
+import { EmailUtils } from '../utils/emailUtils';
 import crypto from 'crypto';
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
+const VERIFY_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
 export class AuthService {
     static async signup(data: signUpInput) {
@@ -29,11 +31,15 @@ export class AuthService {
 
         const savedUser = await user.save();
 
+        const emailSent = await this.sendVerificationLink(savedUser.id, savedUser.email, savedUser.firstName);
+
         const { password, ...userWithoutPassword } = savedUser.toObject();
 
         return {
             success: true,
-            message: "User Successfully Created.",
+            message: emailSent
+                ? 'Account created. Check your inbox to confirm your email.'
+                : 'Account created, but we could not send the confirmation email. You can resend it after logging in.',
             code: 'SIGNUP_OK',
             data: userWithoutPassword
         }
@@ -224,5 +230,67 @@ export class AuthService {
         }
 
         return { success: true, message: 'Logged out of all devices.', code: 'LOGOUT_ALL_OK' };
+    }
+
+    private static async sendVerificationLink(userId: string, email: string, firstName?: string) {
+        const rawToken = crypto.randomBytes(32).toString('hex');
+
+        await User.updateOne(
+            { _id: userId },
+            {
+                $set: {
+                    emailVerificationToken: HashUtils.hashToken(rawToken),
+                    emailVerificationExpires: new Date(Date.now() + VERIFY_TOKEN_TTL_MS),
+                },
+            },
+        );
+
+        const verifyUrl = `${process.env.FRONTEND_URL}/verify-email?token=${rawToken}`;
+        return EmailUtils.sendVerificationEmail(email, verifyUrl, firstName);
+    }
+
+    static async verifyEmail(rawToken: string) {
+        const user = await User.findOneAndUpdate(
+            {
+                emailVerificationToken: HashUtils.hashToken(rawToken),
+                emailVerificationExpires: { $gt: new Date() },
+            },
+            {
+                $set: { isEmailVerified: true },
+                $unset: { emailVerificationToken: 1, emailVerificationExpires: 1 },
+            },
+        );
+
+        if (!user) {
+            return {
+                success: false,
+                message: 'This link is invalid, has expired, or has already been used.',
+                code: 'VERIFY_TOKEN_INVALID',
+            };
+        }
+
+        return { success: true, message: 'Your email is confirmed.', code: 'EMAIL_VERIFIED' };
+    }
+
+    static async resendVerification(userId: string) {
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return { success: false, message: 'User no longer exists.', code: 'USER_NOT_FOUND' };
+        }
+        if (user.isEmailVerified) {
+            return { success: true, message: 'Your email is already confirmed.', code: 'ALREADY_VERIFIED' };
+        }
+
+        const sent = await this.sendVerificationLink(user.id, user.email, user.firstName);
+        if (!sent) {
+            return {
+                success: false,
+                message: 'We could not send the email right now. Please try again shortly.',
+                code: 'EMAIL_SEND_FAILED',
+            };
+        }
+
+        return { success: true, message: `We've sent a new link to ${user.email}.`, code: 'VERIFICATION_SENT' };
     }
 }
