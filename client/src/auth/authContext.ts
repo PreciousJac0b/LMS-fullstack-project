@@ -8,7 +8,6 @@ export type User = {
   firstName?: string
   lastName?: string
   role: UserRole
-  enrollments?: string[]
 }
 
 export type SignupInput = {

@@ -1,12 +1,11 @@
-import { CardContent, CardHeader, CardTitle, Card } from "./ui/card"
+import { CardHeader, CardTitle, Card } from "./ui/card"
 
 type WelcomeBannerProps = {
   name: string
-  courseCount: number
 }
 
 function WelcomeBanner(props: WelcomeBannerProps) {
-  const { name, courseCount } = props;
+  const { name } = props;
   return (
     <Card className="mx-auto max-w-xl">
       <CardHeader>
@@ -14,11 +13,11 @@ function WelcomeBanner(props: WelcomeBannerProps) {
           Welcome back, {name}
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      {/* <CardContent>
         <p className="text-sm text-muted-foreground">
           You have {courseCount} courses in progress.
         </p>
-      </CardContent>
+      </CardContent> */}
     </Card>
   )
 }

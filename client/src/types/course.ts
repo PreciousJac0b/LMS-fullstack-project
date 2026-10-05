@@ -39,3 +39,28 @@ export type Lesson = {
   isPreview: boolean
   durationSeconds: number
 }
+
+export type Enrollment = {
+  _id: string
+  course: string
+  completionPercentage: number
+  enrolledAt: string
+}
+
+export type EnrolledCourse = {
+  _id: string
+  title: string
+  slug: string
+  thumbnailUrl?: string
+  level: CourseLevel
+  price: number
+  currency: string
+  isFree: boolean
+}
+
+export type MyEnrollment = {
+  _id: string
+  course: EnrolledCourse
+  completionPercentage: number
+  enrolledAt: string
+}

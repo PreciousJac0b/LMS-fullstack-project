@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useParams } from 'react-router-dom'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { api } from '@/lib/apiClient'
-import type { CourseDetail, Lesson } from '@/types/course'
+import type { CourseDetail, Enrollment, Lesson } from '@/types/course'
+import { useAuth } from '@/auth/useAuth';
+import { formatPrice } from '@/lib/format'
 
 function formatDuration(totalSeconds: number) {
   const minutes = Math.round(totalSeconds / 60)
@@ -17,7 +19,14 @@ function formatDuration(totalSeconds: number) {
 
 function CourseDetailPage() {
   const { slug } = useParams()
+  const location = useLocation();
+  const { user, isRestoring } = useAuth()
 
+
+  const [isEnrolled, setIsEnrolled] = useState(false)
+  const [isCheckingEnrollment, setIsCheckingEnrollment] = useState(false)
+  const [enrollError, setEnrollError] = useState('')
+  const [isEnrolling, setIsEnrolling] = useState(false)
   const [course, setCourse] = useState<CourseDetail | null>(null)
   const [lessons, setLessons] = useState<Lesson[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -62,7 +71,39 @@ function CourseDetailPage() {
     loadCourse()
 
     return () => controller.abort()
-  }, [slug])
+  }, [slug, user])
+
+  useEffect(() => {
+    if (!course || !user) {
+      setIsEnrolled(false)
+      return
+    }
+
+    const controller = new AbortController()
+
+    async function checkEnrollment() {
+      setIsCheckingEnrollment(true)
+
+      try {
+        const response = await api.get(`/enrollments/courses/${course!._id}`, {
+          signal: controller.signal,
+        })
+        setIsEnrolled(response.data.data.isEnrolled)
+      } catch (err: any) {
+        if (err.code !== 'ERR_CANCELED') {
+          setIsEnrolled(false)
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsCheckingEnrollment(false)
+        }
+      }
+    }
+
+    checkEnrollment()
+
+    return () => controller.abort()
+  }, [course, user])
 
   if (isLoading) {
     return (
@@ -73,6 +114,38 @@ function CourseDetailPage() {
         <Skeleton className="h-40 w-full rounded-xl" />
       </div>
     )
+  }
+
+  async function handleFreeEnroll() {
+    if (!course) return
+
+    setEnrollError('')
+    setIsEnrolling(true)
+
+    try {
+      await api.post(`/enrollments/courses/${course._id}`)
+      setIsEnrolled(true)
+    } catch (err: any) {
+      setEnrollError(err.response?.data?.message ?? 'Could not enrol. Please try again.')
+    } finally {
+      setIsEnrolling(false)
+    }
+  }
+
+  async function handleBuy() {
+    if (!course) return
+
+    setEnrollError('')
+    setIsEnrolling(true)
+
+    try {
+      const response = await api.post(`/payments/pay/${course._id}`)
+      // Leaving the app on purpose — Paystack's checkout is on their domain.
+      window.location.href = response.data.data.authorizationUrl
+    } catch (err: any) {
+      setEnrollError(err.response?.data?.message ?? 'Could not start checkout. Please try again.')
+      setIsEnrolling(false)
+    }
   }
 
   if (notFound) {
@@ -114,6 +187,34 @@ function CourseDetailPage() {
         )}
 
         <p className="max-w-2xl text-sm leading-relaxed">{course.description}</p>
+
+        <div className="space-y-2">
+          {isRestoring || isCheckingEnrollment ? (
+            <Button disabled size="lg">Checking…</Button>
+          ) : !user ? (
+            <Button
+              render={<Link to="/login" state={{ from: location }} />}
+              nativeButton={false}
+              size="lg"
+            >
+              Log in to enrol
+            </Button>
+          ) : isEnrolled ? (
+            <Button render={<Link to={`/courses/${course.slug}/learn`} />} nativeButton={false} size="lg">
+              Go to course
+            </Button>
+          ) : course.isFree || course.price <= 0 ? (
+            <Button disabled={isEnrolling} onClick={handleFreeEnroll} size="lg">
+              {isEnrolling ? 'Enrolling…' : 'Enrol for free'}
+            </Button>
+          ) : (
+            <Button disabled={isEnrolling} onClick={handleBuy} size="lg">
+              {isEnrolling ? 'Starting checkout…' : `Buy for ${formatPrice(course)}`}
+            </Button>
+          )}
+
+          {enrollError && <p className="text-destructive text-sm">{enrollError}</p>}
+        </div>
       </div>
 
       <Separator />
