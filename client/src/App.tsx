@@ -1,5 +1,5 @@
 
-import { Routes, Route, Link } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 // import { useAuth } from './auth/useAuth'
 // import { Button } from '@/components/ui/button'
 import HomePage from './pages/HomePage'
@@ -12,6 +12,8 @@ import CourseDetailPage from './pages/CourseDetailPage'
 import Navbar from './components/Navbar'
 import PaymentCallbackPage from './pages/PaymentCallbackPage'
 import CoursePlayerPage from './pages/CoursePlayerPage'
+import VerifyEmailPage from './pages/VerifyEmailPage'
+import VerifyEmailBanner from './components/VerifyEmailBanner'
 
 function App() {
   // const { user, isRestoring, logout } = useAuth();
@@ -21,11 +23,13 @@ function App() {
 
 
       <main className="mx-auto max-w-5xl space-y-8 px-4 pt-32 pb-16 md:px-8">
+        <VerifyEmailBanner />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/courses/:slug" element={<CourseDetailPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/dashboard" element={
             <ProtectedRoute>
               <DashboardPage />

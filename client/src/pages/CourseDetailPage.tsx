@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { api } from '@/lib/apiClient'
-import type { CourseDetail, Enrollment, Lesson } from '@/types/course'
+import type { CourseDetail, Lesson } from '@/types/course'
 import { useAuth } from '@/auth/useAuth';
 import { formatPrice } from '@/lib/format'
 

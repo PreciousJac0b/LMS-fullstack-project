@@ -8,6 +8,7 @@ export type User = {
   firstName?: string
   lastName?: string
   role: UserRole
+  isEmailVerified: boolean
 }
 
 export type SignupInput = {
@@ -23,6 +24,7 @@ export type AuthContextValue = {
   login: (email: string, password: string) => Promise<void>
   signup: (input: SignupInput) => Promise<void>
   logout: () => Promise<void>
+  refreshUser: () => Promise<void>
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)

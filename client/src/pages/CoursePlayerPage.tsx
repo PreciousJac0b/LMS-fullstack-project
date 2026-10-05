@@ -4,7 +4,9 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { api } from '@/lib/apiClient'
-import type { CourseDetail, Lesson } from '@/types/course'
+import { CircleCheck } from 'lucide-react'
+import type { CourseDetail, Enrollment, Lesson } from '@/types/course';
+
 
 type LessonDetail = Lesson & {
   deliverableUrl?: string
@@ -77,8 +79,18 @@ function CoursePlayerPage() {
   const [lesson, setLesson] = useState<LessonDetail | null>(null)
   const [isLoadingLesson, setIsLoadingLesson] = useState(false)
   const [lessonError, setLessonError] = useState('')
+  const [enrollment, setEnrollment] = useState<Enrollment | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
 
-  const selectedId = searchParams.get('lesson') ?? ''
+  const selectedId = searchParams.get('lesson') ?? '';
+
+  const completedIds = new Set(
+    (enrollment?.lessonProgress ?? [])
+      .filter((p) => p.completed)
+      .map((p) => p.lesson),
+  )
+  const isCurrentDone = completedIds.has(selectedId)
 
   // Course + its lessons
   useEffect(() => {
@@ -87,6 +99,7 @@ function CoursePlayerPage() {
     async function loadCourse() {
       setIsLoadingCourse(true)
       setError('')
+      setEnrollment(null);
 
       try {
         const courseResponse = await api.get(`/courses/${slug}`, { signal: controller.signal })
@@ -97,8 +110,15 @@ function CoursePlayerPage() {
           `/lessons/courses/${loadedCourse._id}/lessons`,
           { signal: controller.signal },
         )
-        setLessons(lessonsResponse.data.data.lessons)
-        setPreviewOnly(lessonsResponse.data.data.previewOnly)
+        setLessons(lessonsResponse.data.data.lessons);
+        setPreviewOnly(lessonsResponse.data.data.previewOnly);
+        if (!lessonsResponse.data.data.previewOnly) {
+          const enrollmentResponse = await api.get(
+            `/enrollments/courses/${loadedCourse._id}`,
+            { signal: controller.signal },
+          )
+          setEnrollment(enrollmentResponse.data.data.enrollment)
+        }
       } catch (err: any) {
         if (err.code === 'ERR_CANCELED') return
         setError(err.response?.data?.message ?? 'Could not load this course.')
@@ -158,6 +178,22 @@ function CoursePlayerPage() {
     setSearchParams(next)
   }
 
+  async function toggleComplete() {
+    setIsSaving(true)
+    setSaveError('')
+
+    try {
+      const response = await api.put(`/enrollments/lessons/${selectedId}/progress`, {
+        completed: !isCurrentDone,
+      })
+      setEnrollment(response.data.data.enrollment) 
+    } catch (err: any) {
+      setSaveError(err.response?.data?.message ?? 'Could not save your progress.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   if (isLoadingCourse) {
     return (
       <div className="space-y-4">
@@ -197,6 +233,7 @@ function CoursePlayerPage() {
         <h1 className="font-bold text-2xl leading-tight">{lesson?.title ?? 'Select a lesson'}</h1>
       </div>
 
+
       <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
         <div className="space-y-4">
           {isLoadingLesson && <Skeleton className="aspect-video w-full rounded-lg" />}
@@ -205,6 +242,20 @@ function CoursePlayerPage() {
           )}
           {!isLoadingLesson && !lessonError && lesson && <LessonContent lesson={lesson} />}
 
+          {lesson && (
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                disabled={isSaving}
+                onClick={toggleComplete}
+                type="button"
+                variant={isCurrentDone ? 'outline' : 'default'}
+              >
+                {isCurrentDone && <CircleCheck />}
+                {isSaving ? 'Saving…' : isCurrentDone ? 'Completed · undo' : 'Mark as complete'}
+              </Button>
+              {saveError && <p className="text-destructive text-sm">{saveError}</p>}
+            </div>
+          )}
           {lesson?.description && (
             <p className="text-muted-foreground text-sm leading-relaxed">{lesson.description}</p>
           )}
@@ -213,23 +264,28 @@ function CoursePlayerPage() {
         <aside className="space-y-2">
           <h2 className="font-medium text-sm">
             {lessons.length} {lessons.length === 1 ? 'lesson' : 'lessons'}
+            {enrollment && ` · ${enrollment.completionPercentage}% complete`}
           </h2>
 
           <ul className="space-y-1">
             {lessons.map((item) => (
               <li key={item._id}>
                 <button
-                  className={`w-full rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
-                    item._id === selectedId
-                      ? 'border-border bg-muted font-medium'
-                      : 'border-transparent hover:bg-muted/60'
-                  }`}
+                  className={`w-full rounded-lg border px-3 py-2 text-left text-sm transition-colors ${item._id === selectedId
+                    ? 'border-border bg-muted font-medium'
+                    : 'border-transparent hover:bg-muted/60'
+                    }`}
                   onClick={() => selectLesson(item._id)}
                   type="button"
                 >
                   <span className="flex items-center justify-between gap-2">
-                    <span className="truncate">
-                      {item.order}. {item.title}
+                    <span className="flex min-w-0 items-center gap-2">
+                      {completedIds.has(item._id) && (
+                        <CircleCheck className="size-4 shrink-0 text-primary" />
+                      )}
+                      <span className="truncate">
+                        {item.order}. {item.title}
+                      </span>
                     </span>
                     {item.isPreview && <Badge variant="secondary">Free</Badge>}
                   </span>

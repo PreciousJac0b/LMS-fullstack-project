@@ -60,6 +60,16 @@ function AuthProvider({ children }: AuthProviderProps) {
     await login(input.email, input.password);
   }
 
+  async function refreshUser() {
+    try {
+      const response = await api.get('/auth/me')
+      setUser(response.data.data)
+    } catch (err) {
+      // Keep the current user; a real sign-out is handled by the refresh interceptor
+      console.warn('Could not refresh the user', err)
+    }
+  }
+
   async function logout() {
     try {
       await api.post('/auth/logout')
@@ -70,7 +80,7 @@ function AuthProvider({ children }: AuthProviderProps) {
   }
 
   return (
-    <AuthContext value={{ user, isRestoring, login, signup, logout }}>
+    <AuthContext value={{ user, isRestoring, login, signup, logout, refreshUser }}>
       {children}
     </AuthContext>
   )

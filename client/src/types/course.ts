@@ -40,13 +40,6 @@ export type Lesson = {
   durationSeconds: number
 }
 
-export type Enrollment = {
-  _id: string
-  course: string
-  completionPercentage: number
-  enrolledAt: string
-}
-
 export type EnrolledCourse = {
   _id: string
   title: string
@@ -63,4 +56,19 @@ export type MyEnrollment = {
   course: EnrolledCourse
   completionPercentage: number
   enrolledAt: string
+}
+
+export type LessonProgress = {
+  lesson: string
+  completed: boolean
+  completedAt?: string
+}
+
+export type Enrollment = {
+  _id: string
+  course: string
+  completionPercentage: number
+  enrolledAt: string
+  lessonProgress: LessonProgress[]
+  completedAt?: string
 }

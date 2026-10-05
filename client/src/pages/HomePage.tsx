@@ -98,7 +98,6 @@ function HomePage() {
       {user && (
         <WelcomeBanner
           name={user.firstName ?? user.email}
-          courseCount={user.enrollments?.length ?? 0}
         />
       )}
 
