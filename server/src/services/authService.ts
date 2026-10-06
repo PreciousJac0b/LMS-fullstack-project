@@ -4,6 +4,7 @@ import { HashUtils } from "../utils/hashUtils";
 import { JWTUtils } from "../utils/jwtUtils";
 import { Session } from "../models/Session";
 import { EmailUtils } from '../utils/emailUtils';
+import { LoggerUtils } from '../utils/loggerUtils';
 import crypto from 'crypto';
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
@@ -11,8 +12,7 @@ const VERIFY_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
 export class AuthService {
     static async signup(data: signUpInput) {
-        // Implement validation with Joi for the input
-        const email = data.email.toLowerCase();
+        const { email, firstName, lastName } = data;
         const existingUser = await User.findOne({ email })
 
         if (existingUser) {
@@ -24,8 +24,6 @@ export class AuthService {
         }
 
         const hashedPassword = await HashUtils.hashPassword(data.password);
-
-        const { firstName, lastName } = data;
 
         const user = new User({ email, firstName, lastName, password: hashedPassword, authProvider: 'local' })
 
@@ -46,13 +44,9 @@ export class AuthService {
     }
 
     static async login(data: loginInput) {
-        // Validation with Joi
-
         const { email, password } = data;
 
-        const normEmail = email.toLowerCase().trim();
-
-        const user = await User.findOne({ email: normEmail }).select('+password +tokenVersion');
+        const user = await User.findOne({ email }).select('+password +tokenVersion');
 
         if (!user) {
             return {
@@ -90,7 +84,7 @@ export class AuthService {
         })
 
         const userSafe = user.toObject();
-        const { password: _, createdCourses, ...userWithoutPassword } = userSafe;
+        const { password: _, tokenVersion: __, createdCourses, ...userWithoutPassword } = userSafe;
         return {
             success: true,
             message: 'User logged in successfully',
@@ -160,34 +154,68 @@ export class AuthService {
     }
 
     static async requestPasswordReset(email: string) {
-        const normEmail = email.toLowerCase().trim();
-        const user = await User.findOne({ email: normEmail });
+        const user = await User.findOne({ email });
 
-        const genericResult = {
+        if (user && user.authProvider === 'local') {
+            this.sendResetLink(user.id, user.email, user.firstName).catch((error) => {
+                LoggerUtils.error('Failed to start password reset', { error: String(error) });
+            });
+        }
+
+        return {
             success: true,
-            message: 'If an account exists for that email, a reset link has been sent.',
+            message: 'If an account exists for that email, we have sent a link to reset the password.',
             code: 'RESET_REQUESTED',
         };
+    }
 
-        if (!user || user.authProvider !== 'local') return genericResult;
-
+    private static async sendResetLink(userId: string, email: string, firstName?: string) {
         const rawToken = crypto.randomBytes(32).toString('hex');
-        user.passwordResetToken = HashUtils.hashToken(rawToken);   // sync now
-        user.passwordResetExpires = new Date(Date.now() + RESET_TOKEN_TTL_MS);
-        await user.save();
 
-        // const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${rawToken}&email=${encodeURIComponent(normEmail)}`;
+        await User.updateOne(
+            { _id: userId },
+            {
+                $set: {
+                    passwordResetToken: HashUtils.hashToken(rawToken),
+                    passwordResetExpires: new Date(Date.now() + RESET_TOKEN_TTL_MS),
+                },
+            },
+        );
 
-        // // Don't let an email failure surface details to the caller
-        // try {
-        //     // await EmailService.sendPasswordReset(normEmail, resetUrl, user.firstName);
-        // } catch (err) {
-        //     console.error('Failed to send reset email:', err);
-        //     // Still return generic success — don't reveal the address exists via an error
-        // }
+        const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${rawToken}`;
+        return EmailUtils.sendPasswordResetEmail(email, resetUrl, firstName);
+    }
 
-        return genericResult;
+    static async resetPassword(rawToken: string, newPassword: string) {
+        const hashedPassword = await HashUtils.hashPassword(newPassword);
 
+        const user = await User.findOneAndUpdate(
+            {
+                passwordResetToken: HashUtils.hashToken(rawToken),
+                passwordResetExpires: { $gt: new Date() },
+            },
+            {
+                $set: { password: hashedPassword, isEmailVerified: true },
+                $unset: { passwordResetToken: 1, passwordResetExpires: 1 },
+                $inc: { tokenVersion: 1 },
+            },
+        );
+
+        if (!user) {
+            return {
+                success: false,
+                message: 'This link is invalid, has expired, or has already been used.',
+                code: 'RESET_TOKEN_INVALID',
+            };
+        }
+
+        await Session.deleteMany({ user: user._id });
+
+        return {
+            success: true,
+            message: 'Your password has been reset. Please log in with your new password.',
+            code: 'PASSWORD_RESET',
+        };
     }
 
     static async getMe(userId: string) {

@@ -9,7 +9,7 @@ export const refreshCookieOptions: CookieOptions = {
     secure: isProd,
     sameSite: isProd ? 'none' : 'lax',
     path: '/api/v1/auth',
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+    maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
 const statusForCode: Record<string, number> = {
@@ -28,6 +28,9 @@ const statusForCode: Record<string, number> = {
     ALREADY_VERIFIED: 200,
     VERIFICATION_SENT: 200,
     EMAIL_SEND_FAILED: 503,
+    RESET_REQUESTED: 200,
+    RESET_TOKEN_INVALID: 400,
+    PASSWORD_RESET: 200,
 };
 
 export class AuthController {
@@ -125,7 +128,7 @@ export class AuthController {
         }
     }
 
-     static async verifyEmail(req: Request, res: Response): Promise<void> {
+    static async verifyEmail(req: Request, res: Response): Promise<void> {
         try {
             const result = await AuthService.verifyEmail(req.body.token);
             res.status(statusForCode[result.code ?? ''] ?? 400).json(result);
@@ -138,6 +141,30 @@ export class AuthController {
         try {
             const userId = (req as any).user.id;
             const result = await AuthService.resendVerification(userId);
+            res.status(statusForCode[result.code ?? ''] ?? 400).json(result);
+        } catch (err: any) {
+            res.status(500).json({ success: false, message: 'Internal Server Error' });
+        }
+    }
+
+    static async forgotPassword(req: Request, res: Response): Promise<void> {
+        try {
+            const result = await AuthService.requestPasswordReset(req.body.email);
+            res.status(statusForCode[result.code ?? ''] ?? 400).json(result);
+        } catch (err: any) {
+            res.status(500).json({ success: false, message: 'Internal Server Error' });
+        }
+    }
+
+    static async resetPassword(req: Request, res: Response): Promise<void> {
+        try {
+            const { token, password } = req.body;
+            const result = await AuthService.resetPassword(token, password);
+
+            if (result.success) {
+                res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions);
+            }
+
             res.status(statusForCode[result.code ?? ''] ?? 400).json(result);
         } catch (err: any) {
             res.status(500).json({ success: false, message: 'Internal Server Error' });

@@ -1,6 +1,12 @@
 import express from "express";
 import { validateBody } from '../middleware/validateBody';
-import { loginSchema, signupSchema, verifyEmailSchema } from '../validation/authSchemas';
+import {
+    forgotPasswordSchema,
+    loginSchema,
+    resetPasswordSchema,
+    signupSchema,
+    verifyEmailSchema,
+} from '../validation/authSchemas';
 import { AuthController } from "../controllers/authController";
 import { authMiddleware } from "../middleware/authMiddleware";
 
@@ -16,5 +22,7 @@ router.post('/logout-all', AuthController.logoutAll);
 router.get('/me', authMiddleware, AuthController.me);
 router.post('/verify-email', validateBody(verifyEmailSchema), AuthController.verifyEmail);
 router.post('/verify-email/resend', authMiddleware, AuthController.resendVerification);
+router.post('/forgot-password', validateBody(forgotPasswordSchema), AuthController.forgotPassword);
+router.post('/reset-password', validateBody(resetPasswordSchema), AuthController.resetPassword);
 
 export default router;
