@@ -1,7 +1,5 @@
 
 import { Routes, Route } from 'react-router-dom'
-// import { useAuth } from './auth/useAuth'
-// import { Button } from '@/components/ui/button'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import NotFoundPage from './pages/NotFoundPage'
@@ -14,6 +12,8 @@ import PaymentCallbackPage from './pages/PaymentCallbackPage'
 import CoursePlayerPage from './pages/CoursePlayerPage'
 import VerifyEmailPage from './pages/VerifyEmailPage'
 import VerifyEmailBanner from './components/VerifyEmailBanner'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 
 function App() {
   // const { user, isRestoring, logout } = useAuth();
@@ -30,6 +30,8 @@ function App() {
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/courses/:slug" element={<CourseDetailPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/dashboard" element={
             <ProtectedRoute>
               <DashboardPage />

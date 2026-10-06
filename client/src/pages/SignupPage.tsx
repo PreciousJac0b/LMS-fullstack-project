@@ -2,8 +2,9 @@ import { useState, type SubmitEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/auth/useAuth'
 import { Button } from '@/components/ui/button'
-import { Field, FieldLabel, FieldDescription } from '@/components/ui/field'
+import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { useFieldErrors } from '@/hooks/useFieldErrors'
 import { Separator } from '@/components/ui/separator'
 
 const MIN_PASSWORD_LENGTH = 8
@@ -19,6 +20,7 @@ function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { fieldErrors, setFieldErrors, clearFieldError } = useFieldErrors()
 
   const passwordsMatch = password === confirmPassword
   const passwordLongEnough = password.length >= MIN_PASSWORD_LENGTH
@@ -27,13 +29,24 @@ function SignupPage() {
   async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     setError('')
+    setFieldErrors({})
     setIsSubmitting(true)
 
     try {
       await signup({ firstName, lastName, email, password })
       navigate('/', { replace: true })
     } catch (err: any) {
-      setError(err.response?.data?.message ?? 'Could not create your account. Please try again.')
+      const data = err.response?.data
+
+      if (data?.code === 'VALIDATION_ERROR') {
+        setFieldErrors(data.errors)
+        setError('Please fix the highlighted fields.')
+      } else if (data?.code === 'USER_EXISTS') {
+        setFieldErrors({ email: ['An account with this email already exists. Try logging in.'] })
+      } else {
+        setError(data?.message ?? 'Could not create your account. Please try again.')
+      }
+
       setIsSubmitting(false)
     }
   }
@@ -64,8 +77,13 @@ function SignupPage() {
                   required
                   type="text"
                   value={firstName}
-                  onChange={(event) => setFirstName(event.target.value)}
+                  aria-invalid={Boolean(fieldErrors.firstName)}
+                  onChange={(event) => {
+                    setFirstName(event.target.value)
+                    clearFieldError('firstName')
+                  }}
                 />
+                <FieldError>{fieldErrors.firstName?.[0]}</FieldError>
               </Field>
             </div>
 
@@ -83,8 +101,13 @@ function SignupPage() {
                   required
                   type="text"
                   value={lastName}
-                  onChange={(event) => setLastName(event.target.value)}
+                  aria-invalid={Boolean(fieldErrors.lastName)}
+                  onChange={(event) => {
+                    setLastName(event.target.value)
+                    clearFieldError('lastName')
+                  }}
                 />
+                <FieldError>{fieldErrors.lastName?.[0]}</FieldError>
               </Field>
             </div>
 
@@ -102,8 +125,13 @@ function SignupPage() {
                   required
                   type="email"
                   value={email}
-                  onChange={(event) => setEmail(event.target.value)}
+                  aria-invalid={Boolean(fieldErrors.email)}
+                  onChange={(event) => {
+                    setEmail(event.target.value)
+                    clearFieldError('email')
+                  }}
                 />
+                <FieldError>{fieldErrors.email?.[0]}</FieldError>
               </Field>
             </div>
 
@@ -122,11 +150,16 @@ function SignupPage() {
                   required
                   type="password"
                   value={password}
-                  onChange={(event) => setPassword(event.target.value)}
+                  aria-invalid={Boolean(fieldErrors.password)}
+                  onChange={(event) => {
+                    setPassword(event.target.value)
+                    clearFieldError('password')
+                  }}
                 />
                 <FieldDescription>
                   At least {MIN_PASSWORD_LENGTH} characters.
                 </FieldDescription>
+                <FieldError>{fieldErrors.password?.[0]}</FieldError>
               </Field>
             </div>
 
