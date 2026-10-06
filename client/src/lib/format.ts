@@ -1,6 +1,6 @@
 import type { Course } from "@/types/course"
 
-export function formatPrice(course: Course) {
+export function formatPrice(course: Pick<Course, 'isFree' | 'price' | 'currency'>) {
   if (course.isFree || course.price <= 0) {
     return 'Free'
   }

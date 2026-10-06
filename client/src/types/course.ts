@@ -72,3 +72,27 @@ export type Enrollment = {
   lessonProgress: LessonProgress[]
   completedAt?: string
 }
+
+export type CourseStatus = 'draft' | 'published' | 'unpublished'
+
+export type InstructorCourse = {
+  _id: string
+  title: string
+  slug: string
+  status: CourseStatus
+  price: number
+  currency: string
+  isFree: boolean
+  thumbnailUrl?: string
+  enrollmentCount: number
+  lessonCount: number
+  updatedAt: string
+  publishedAt?: string
+}
+
+export type ManagedCourse = Course & {
+  status: CourseStatus
+  category?: string
+  publishedAt?: string
+  thumbnailPublicId?: string
+}

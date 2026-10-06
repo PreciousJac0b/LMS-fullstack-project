@@ -1,17 +1,20 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/auth/useAuth'
+import type { UserRole } from '@/auth/authContext'
 import { Button } from '@/components/ui/button'
 
 type NavLink = {
   name: string
   path: string
   authOnly?: boolean
+  roles?: UserRole[]
 }
 
 const navLinks: NavLink[] = [
   { name: 'Courses', path: '/' },
   { name: 'Dashboard', path: '/dashboard', authOnly: true },
+  { name: 'Teach', path: '/teach', roles: ['instructor', 'admin'] },
 ]
 
 function Navbar() {
@@ -22,7 +25,6 @@ function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-  // Condense the bar once the page has scrolled a little.
   useEffect(() => {
     function handleScroll() {
       setIsScrolled(window.scrollY > 10)
@@ -44,16 +46,21 @@ function Navbar() {
     navigate('/', { replace: true })
   }
 
-  const visibleLinks = navLinks.filter((link) => !link.authOnly || user)
-  const isActive = (path: string) => location.pathname === path
+  const visibleLinks = navLinks.filter((link) => {
+    if (link.authOnly && !user) return false
+    if (link.roles && (!user || !link.roles.includes(user.role))) return false
+    return true
+  })
+
+  const isActive = (path: string) =>
+    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path)
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-        isScrolled
-          ? 'border-border border-b bg-background/80 py-3 backdrop-blur-lg'
-          : 'border-transparent border-b bg-background py-5'
-      }`}
+      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${isScrolled
+        ? 'border-border border-b bg-background/80 py-3 backdrop-blur-lg'
+        : 'border-transparent border-b bg-background py-5'
+        }`}
     >
       <div className="mx-auto flex max-w-5xl items-center gap-8 px-4 md:px-8">
         {/* Wordmark */}
@@ -73,17 +80,15 @@ function Navbar() {
             <Link
               key={link.path}
               to={link.path}
-              className={`group flex flex-col gap-1 text-sm transition-colors ${
-                isActive(link.path)
-                  ? 'font-medium text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
+              className={`group flex flex-col gap-1 text-sm transition-colors ${isActive(link.path)
+                ? 'font-medium text-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+                }`}
             >
               {link.name}
               <span
-                className={`h-px bg-foreground transition-all duration-300 ${
-                  isActive(link.path) ? 'w-full' : 'w-0 group-hover:w-full'
-                }`}
+                className={`h-px bg-foreground transition-all duration-300 ${isActive(link.path) ? 'w-full' : 'w-0 group-hover:w-full'
+                  }`}
               />
             </Link>
           ))}
@@ -132,9 +137,8 @@ function Navbar() {
 
       {/* Mobile panel */}
       <div
-        className={`fixed inset-0 z-50 flex h-screen flex-col gap-7 bg-background px-6 pt-24 transition-transform duration-300 md:hidden ${
-          isMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed inset-0 z-50 flex h-screen flex-col gap-7 bg-background px-6 pt-24 transition-transform duration-300 md:hidden ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         <button
           aria-label="Close menu"

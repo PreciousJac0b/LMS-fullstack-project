@@ -14,6 +14,9 @@ import VerifyEmailPage from './pages/VerifyEmailPage'
 import VerifyEmailBanner from './components/VerifyEmailBanner'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
+import TeachCoursesPage from './pages/TeachCoursesPage'
+import NewCoursePage from './pages/NewCoursePage'
+import CourseEditorPage from './pages/CourseEditorPage'
 
 function App() {
   // const { user, isRestoring, logout } = useAuth();
@@ -43,6 +46,30 @@ function App() {
             element={
               <ProtectedRoute>
                 <CoursePlayerPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teach"
+            element={
+              <ProtectedRoute roles={['instructor', 'admin']}>
+                <TeachCoursesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teach/new"
+            element={
+              <ProtectedRoute roles={['instructor', 'admin']}>
+                <NewCoursePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teach/courses/:courseId"
+            element={
+              <ProtectedRoute roles={['instructor', 'admin']}>
+                <CourseEditorPage />
               </ProtectedRoute>
             }
           />

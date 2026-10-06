@@ -242,7 +242,7 @@ function CoursePlayerPage() {
           )}
           {!isLoadingLesson && !lessonError && lesson && <LessonContent lesson={lesson} />}
 
-          {lesson && (
+          {lesson && enrollment && (
             <div className="flex flex-wrap items-center gap-3">
               <Button
                 disabled={isSaving}

@@ -174,6 +174,13 @@ function CourseDetailPage() {
   return (
     <div className="space-y-8">
       <div className="space-y-3">
+        {course.thumbnailUrl && (
+          <img
+            src={course.thumbnailUrl}
+            alt=""
+            className="aspect-video w-full max-w-2xl rounded-xl border border-border object-cover"
+          />
+        )}
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="secondary">{course.level}</Badge>
           {course.category && <Badge variant="outline">{course.category}</Badge>}
