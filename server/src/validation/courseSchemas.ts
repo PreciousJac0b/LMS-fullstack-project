@@ -24,7 +24,13 @@ export const createCourseSchema = z.object({
         .min(0, { error: 'Price cannot be negative.' })
         .optional(),
     isFree: z.boolean().optional(),
-    thumbnailUrl: z.url({ error: 'Thumbnail must be a valid link.' }).optional(),
+    thumbnailUrl: z.union([z.url({ error: 'Thumbnail must be a valid link.' }), z.literal('')]).optional(),
+    thumbnailPublicId: z
+        .union([
+            z.string().regex(/^courses\/thumbnails\/[A-Za-z0-9_-]+$/, { error: 'Invalid thumbnail reference.' }),
+            z.literal(''),
+        ])
+        .optional(),
 });
 
 export const updateCourseSchema = createCourseSchema.partial().extend({

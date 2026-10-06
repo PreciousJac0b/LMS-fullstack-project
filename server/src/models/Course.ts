@@ -20,6 +20,7 @@ export interface ICourse extends Document {
   isFree: boolean;
 
   thumbnailUrl?: string;
+  thumbnailPublicId?: string;
   status: CourseStatus;                   // draft/published/unpublished 
 
   lessons: mongoose.Types.ObjectId[];
@@ -37,7 +38,7 @@ const courseSchema = new mongoose.Schema<ICourse>(
     slug: { type: String, required: true, unique: true, lowercase: true, index: true },
     description: { type: String, required: true },
 
-    instructors:[ {
+    instructors: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
@@ -54,6 +55,7 @@ const courseSchema = new mongoose.Schema<ICourse>(
     isFree: { type: Boolean, default: false },
 
     thumbnailUrl: { type: String },
+    thumbnailPublicId: { type: String },
     status: {
       type: String,
       enum: ['draft', 'published', 'unpublished'],

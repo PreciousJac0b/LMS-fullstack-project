@@ -1,19 +1,21 @@
-// src/dtos/lesson.dto.ts
 import mongoose from 'mongoose';
 
 export type LessonContentType = 'video' | 'pdf' | 'slides' | 'quiz';
 
 interface VideoContent {
     url: string;
+    publicId?: string;
     provider?: 'self' | 'youtube' | 'vimeo' | 'mux';
     captionsUrl?: string;
 }
 interface PdfContent {
     url: string;
+    publicId?: string;
     pageCount?: number;
 }
 interface SlidesContent {
     url: string;
+    publicId?: string;
     slideCount?: number;
 }
 

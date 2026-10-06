@@ -1,4 +1,5 @@
-import mongoose from "mongoose";
+import { z } from 'zod';
+import { createCourseSchema, updateCourseSchema } from '../validation/courseSchemas';
 
 export interface GetCoursesQuery {
     q?: string;
@@ -10,18 +11,5 @@ export interface GetCoursesQuery {
     level?: string;
 }
 
-
-export interface CreateCourseDTO {
-    title: string;
-    description: string;
-    tags?: string[];
-    category?: string;
-    level?: 'beginner' | 'intermediate' | 'advanced';
-    language?: string;
-    price?: number;
-    currency?: string;
-    isFree?: boolean;
-    thumbnailUrl?: string;
-
-    creatorId: mongoose.Types.ObjectId | string;
-}
+export type CreateCourseDTO = z.infer<typeof createCourseSchema> & { creatorId: string };
+export type UpdateCourseDTO = z.infer<typeof updateCourseSchema>;

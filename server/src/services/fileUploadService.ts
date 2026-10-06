@@ -1,10 +1,11 @@
 import { getCloudinary } from '../config/cloudinary';
 
-function resourceTypeFor(contentType: string): 'video' | 'image' | 'raw' {
+export function resourceTypeFor(contentType: string): 'video' | 'image' | 'raw' {
     switch (contentType) {
         case 'video':  return 'video';
         case 'pdf':    return 'image';
         case 'slides': return 'raw';
+        case 'thumbnail': return 'image';
         default:       return 'raw';
     }
 }

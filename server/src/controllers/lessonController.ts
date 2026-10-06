@@ -2,9 +2,9 @@ import { Request, Response } from "express";
 import { LessonService } from "../services/lessonService";
 import { Lesson } from "../models/Lesson";
 import { Enrollment } from "../models/Enrollment";
+import { Course } from "../models/Course";
 
 const statusForCode: Record<string, number> = {
-
     LESSON_FOUND: 200,
     LESSONS_FOUND: 200,
     LESSON_NOT_FOUND: 404,
@@ -15,6 +15,8 @@ const statusForCode: Record<string, number> = {
     LESSON_CREATED: 201,
     LESSON_UPDATED: 200,
     LESSON_DELETED: 200,
+    LESSON_MOVED: 200,
+    LESSON_AT_EDGE: 400,
     INVALID_LESSON_INPUT: 400,
     INVALID_CONTENT_TYPE: 400,
     MISSING_VIDEO_URL: 400,
@@ -26,8 +28,15 @@ const statusForCode: Record<string, number> = {
     FORBIDDEN: 403,
 };
 
-async function resolveEnrollment(userId: string, courseId: any): Promise<boolean> {
-    return !!(await Enrollment.exists({ user: userId, course: courseId }));
+async function canSeeAllLessons(userId: string | undefined, courseId: any): Promise<boolean> {
+    if (!userId) return false;
+
+    const [isEnrolled, isInstructor] = await Promise.all([
+        Enrollment.exists({ user: userId, course: courseId }),
+        Course.exists({ _id: courseId, instructors: userId }),
+    ]);
+
+    return Boolean(isEnrolled || isInstructor);
 }
 
 export class LessonController {
@@ -37,10 +46,9 @@ export class LessonController {
             const userId = (req as any).user?.id;
             const { courseId } = req.params as { courseId: string };
 
-            // Enrollment gates which lessons are visible (non-enrolled see previews only)
-            const isEnrolled = userId ? await resolveEnrollment(userId, courseId) : false;
+            const canSeeAll = await canSeeAllLessons(userId, courseId);
 
-            const result = await LessonService.getLessonsByCourse(courseId as string, isEnrolled);
+            const result = await LessonService.getLessonsByCourse(courseId, canSeeAll);
             res.status(statusForCode[result.code ?? ''] ?? 400).json(result);
         } catch (err) {
             console.error('getLessonsByCourse error:', err);
@@ -53,16 +61,15 @@ export class LessonController {
             const userId = (req as any).user.id;
             const { lessonId } = req.params as { lessonId: string };
 
-            // Look up the parent course first, so we can check enrollment
             const lesson = await Lesson.findById(lessonId).select('course').lean();
             if (!lesson) {
                 res.status(404).json({ success: false, message: 'Lesson not found.', code: 'LESSON_NOT_FOUND' });
                 return;
             }
 
-            const isEnrolled = await resolveEnrollment(userId, lesson.course);
+            const canSeeAll = await canSeeAllLessons(userId, lesson.course);
 
-            const result = await LessonService.getLessonById(lessonId, isEnrolled);
+            const result = await LessonService.getLessonById(lessonId, canSeeAll);
             res.status(statusForCode[result.code ?? ''] ?? 400).json(result);
         } catch (err) {
             console.error('getLesson error:', err);
@@ -89,7 +96,7 @@ export class LessonController {
 
     static async updateLesson(req: Request, res: Response): Promise<void> {
         try {
-            const userId = (req as any).user?.id;
+            const userId = (req as any).user.id;
             const { lessonId } = req.params as { lessonId: string };
 
             const result = await LessonService.updateLesson(lessonId, userId, req.body);
@@ -102,7 +109,7 @@ export class LessonController {
 
     static async deleteLesson(req: Request, res: Response): Promise<void> {
         try {
-            const userId = (req as any).user?.id;
+            const userId = (req as any).user.id;
             const { lessonId } = req.params as { lessonId: string };
 
             const result = await LessonService.deleteLesson(lessonId, userId);
@@ -113,4 +120,16 @@ export class LessonController {
         }
     }
 
+    static async moveLesson(req: Request, res: Response): Promise<void> {
+        try {
+            const userId = (req as any).user.id;
+            const { lessonId } = req.params as { lessonId: string };
+
+            const result = await LessonService.moveLesson(lessonId, userId, req.body.direction);
+            res.status(statusForCode[result.code ?? ''] ?? 400).json(result);
+        } catch (err) {
+            console.error('moveLesson error:', err);
+            res.status(500).json({ success: false, message: 'Internal Server Error' });
+        }
+    }
 }
