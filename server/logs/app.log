@@ -285,3 +285,5 @@
 {"level":"info","message":"Shutting down gracefully...","timestamp":"2026-10-06T11:44:38.764Z"}
 {"level":"info","message":"Successfully connected to MongoDB","timestamp":"2026-10-06T11:44:45.470Z"}
 {"level":"info","message":"Server is running on port 3000","timestamp":"2026-10-06T11:44:45.477Z"}
+{"level":"info","message":"Successfully connected to MongoDB","timestamp":"2026-10-06T14:26:18.894Z"}
+{"level":"info","message":"Server is running on port 3000","timestamp":"2026-10-06T14:26:18.900Z"}
