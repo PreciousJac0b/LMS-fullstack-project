@@ -16,6 +16,7 @@ import { LoggerUtils } from './utils/loggerUtils';
 dotenv.config();
 
 const app: Application = express();
+const x: number = 'testing'
 
 const allowedOrigins = [
     'http://localhost:5173',
