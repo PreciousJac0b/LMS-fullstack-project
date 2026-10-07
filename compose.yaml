@@ -1,0 +1,37 @@
+services:
+  mongo:
+    image: mongo:8
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  server:
+    build: ./server
+    ports:
+      - "3000:3000"
+    env_file: ./server/.env
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/lms
+      NODE_ENV: development
+      FRONTEND_URL: http://localhost:8080
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  client:
+    build: ./client
+    ports:
+      - "8080:80"
+    environment:
+      API_UPSTREAM: http://server:3000
+    depends_on:
+      - server
+
+volumes:
+  mongo-data:
