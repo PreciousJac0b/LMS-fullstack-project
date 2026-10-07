@@ -28,7 +28,7 @@ app.use(
             if (!origin || allowedOrigins.includes(origin)) {
                 callback(null, true); // Callback takes two arguments: error and allow
             } else {
-                callback(new Error('Not allowed by CORS')) // Just error is passed here.
+                callback(new Error(`Not allowed by CORS: ${origin}`))// Just error is passed here.
             }
         },
         credentials: true

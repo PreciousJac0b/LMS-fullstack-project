@@ -34,18 +34,39 @@ export class EmailUtils {
     private static transporter: Transporter | null = null;
 
     private static getTransporter(): Transporter {
+        // if (!this.transporter) {
+        //     this.transporter = nodemailer.createTransport({
+        //         host: 'smtp.gmail.com',
+        //         port: 587,
+        //         secure: false,
+        //         requireTLS: true,
+        //         logger: true,
+        //         debug: true,
+        //         auth: {
+        //             user: process.env.SMTP_USER,
+        //             pass: process.env.SMTP_PASSWORD,
+        //         },
+        //         connectionTimeout: 10_000,
+        //         greetingTimeout: 10_000,
+        //         socketTimeout: 15_000,
+        //     });
+        // }
         if (!this.transporter) {
             this.transporter = nodemailer.createTransport({
-                service: 'gmail',
+                host: 'smtp.gmail.com',
+                port: 587,
+                secure: false,
+
                 auth: {
                     user: process.env.SMTP_USER,
                     pass: process.env.SMTP_PASSWORD,
                 },
-                connectionTimeout: 10_000,
-                greetingTimeout: 10_000,
-                socketTimeout: 15_000,
+
+                logger: true,
+                debug: true,
             });
         }
+
         return this.transporter;
     }
 
@@ -67,6 +88,11 @@ export class EmailUtils {
     }
 
     private static async sendWithSmtp(message: Message): Promise<void> {
+        const transporter = this.getTransporter();
+        await transporter.verify();
+
+        LoggerUtils.info('SMTP connection verified successfully');
+
         await this.getTransporter().sendMail({
             from: `"LMS" <${process.env.SMTP_USER}>`,
             to: message.to,
