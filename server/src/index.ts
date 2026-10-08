@@ -35,6 +35,10 @@ app.use(
     })
 )
 
+app.get('/api/v1/health', (_req, res) => {
+    res.json({ status: 'ok' });
+});
+
 app.use('/api/v1/payments', paymentWebhookRoutes);
 app.use(express.json())
 app.use(cookieParser());
